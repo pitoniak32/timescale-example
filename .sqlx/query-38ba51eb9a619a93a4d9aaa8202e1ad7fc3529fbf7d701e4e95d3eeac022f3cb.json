@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT * FROM workflow_runs",
+  "query": "\n    SELECT time, workflow_name, repository_id, duration\n    FROM workflow_runs\n    ",
   "describe": {
     "columns": [
       {
@@ -10,18 +10,18 @@
       },
       {
         "ordinal": 1,
-        "name": "repository_name",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 2,
         "name": "workflow_name",
         "type_info": "Text"
       },
       {
+        "ordinal": 2,
+        "name": "repository_id",
+        "type_info": "Int4"
+      },
+      {
         "ordinal": 3,
         "name": "duration",
-        "type_info": "Int4"
+        "type_info": "Interval"
       }
     ],
     "parameters": {
@@ -31,8 +31,8 @@
       false,
       false,
       false,
-      true
+      false
     ]
   },
-  "hash": "7773a891c4f26154dbb64d5eac987b91e4cc3a68de7302f43da789a72dd4927a"
+  "hash": "38ba51eb9a619a93a4d9aaa8202e1ad7fc3529fbf7d701e4e95d3eeac022f3cb"
 }

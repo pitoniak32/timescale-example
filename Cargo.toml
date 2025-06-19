@@ -5,7 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
+chrono = "0.4.41"
 env_logger = "0.11.8"
 log = "0.4.27"
-sqlx = { version = "0.8", features = ["runtime-tokio", "tls-native-tls", "postgres", "chrono"] }
+names = "0.14.0"
+rand = "0.9.1"
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-native-tls", "postgres", "chrono", "uuid"] }
 tokio = { version = "1.45.1", features = ["full"] }
+uuid = { version = "1.17.0", features = ["v4", "fast-rng"] }
