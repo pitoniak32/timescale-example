@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM workflow_runs",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 1,
+        "name": "repository_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "workflow_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "duration",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "7773a891c4f26154dbb64d5eac987b91e4cc3a68de7302f43da789a72dd4927a"
+}
