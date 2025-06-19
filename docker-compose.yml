@@ -1,4 +1,9 @@
 services:
+  grafana:
+    image: grafana/grafana-oss:12.0.2
+    ports:
+    - 3000:3000
+
   timescaledb:
     image: timescale/timescaledb:latest-pg17
     environment:

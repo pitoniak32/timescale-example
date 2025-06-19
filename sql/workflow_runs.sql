@@ -36,6 +36,17 @@ FROM metrics
 GROUP BY five_min
 ORDER BY five_min DESC LIMIT 10;
 
+-- Grafana query
+SELECT time_bucket_gapfill('$bucket_interval', time) AS time,
+  (r.org_id, r.name) AS "metric",
+  AVG(EXTRACT(epoch FROM duration)) AS "value"
+FROM workflow_runs wr
+JOIN repositories r ON wr.repository_id = r.id
+WHERE repository_id in ($repository)
+  AND time >= $__timeFrom()::timestamptz AND time < $__timeTo()::timestamptz
+GROUP BY r.org_id, r.name, time_bucket_gapfill('$bucket_interval', time)
+ORDER BY time;
+
 -- END: TIME BUCKETS
 
 -- BEGIN: CONTINUOUS AGGREGATES

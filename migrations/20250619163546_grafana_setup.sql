@@ -1,0 +1,3 @@
+--  CREATE USER grafanareader WITH PASSWORD 'password';
+--  GRANT USAGE ON SCHEMA schema TO grafanareader;
+--  GRANT SELECT ON schema.table TO grafanareader;

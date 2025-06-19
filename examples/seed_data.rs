@@ -35,6 +35,21 @@ async fn generate_seed_data(
         (1, "periodic-wing", "9bfeff91-ba3c-4eef-9479-3407a59ded6b"),
         (2, "fascinated-feet", "0a65112c-62df-4f36-a748-f1ba4ef30c3b"),
         (3, "testy-legs", "4a1c33a9-acb5-4f71-8a31-39708835b535"),
+        (
+            4,
+            "testier-legs-cmd",
+            "4a1c33a9-acb5-4f71-8a31-39708835b535",
+        ),
+        (
+            5,
+            "testier-legs-query",
+            "4a1c33a9-acb5-4f71-8a31-39708835b535",
+        ),
+        (
+            6,
+            "testier-legs-worker",
+            "4a1c33a9-acb5-4f71-8a31-39708835b535",
+        ),
     ];
 
     for (repo_id, name, org_id) in repo_org_id {
