@@ -8,6 +8,9 @@ services:
     image: timescale/timescaledb:latest-pg17
     environment:
       POSTGRES_USERNAME: postgres
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgresdb
+      PGDATA: data
     ports:
     - 5432:5432

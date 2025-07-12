@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "timescale-db-helm.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "timescale-db-helm.selector-labels" . | nindent 6 }}
+  serviceName: {{ .Release.Name }}
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        # roll pods on change of configmap / secret
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "timescale-db-helm.labels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+      - name: init
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        command: [ "bash", "-c" ]
+        args:
+        - |
+          #create archive directory
+          mkdir -p /data/archive && chown -R 999:999 /data/archive
+        {{- if .Values.pvc }}
+        volumeMounts:
+          - name: "{{ .Release.Name }}-pvc"
+            mountPath: {{ .Values.pvc.mountPath }}
+            readOnly: {{ .Values.pvc.readOnly }}
+        {{- end }}
+      containers:
+      - name: {{ .Release.Name }}
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        args: ["-c", "config_file=/config/postgresql.conf"]
+        {{- with .Values.ports }}
+        ports:
+        {{- range $i, $port := . }}
+        - name: {{ $port.name }}
+          containerPort: {{ $port.containerPort }}
+          protocol: {{ $port.protocol | upper | quote }}
+        {{- end }}
+        {{- end }}
+        env:
+        {{- range $key, $value := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- $root := $ }}
+        {{- range $key, $value := .Values.secrets }}
+        - name: {{ $key }}
+          valueFrom:
+            secretKeyRef:
+              key: {{ $key }}
+              name: {{ $root.Release.Name }}
+        {{- end }}
+        {{- if or .Values.pvc .Values.extraVolumeMounts .Values.configMap }}
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: var-volume
+          mountPath: /var/run/postgresql
+        {{- if .Values.pvc }}
+        - name: "{{ .Release.Name }}-pvc"
+          mountPath: {{ .Values.pvc.mountPath }}
+          readOnly: {{ .Values.pvc.readOnly }}
+        {{- end }}
+        {{- if .Values.configMap }}
+        - name: config
+          mountPath: {{ .Values.configMap.mountPath }}
+          readOnly: {{ .Values.configMap.readOnly }}
+        {{- end }}
+        {{- range .Values.extraVolumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+        {{- end }}
+        {{- end }}
+      {{- if or .Values.configMap .Values.volumeMounts }}
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+      - name: var-volume
+        emptyDir: {}
+      {{- if .Values.configMap }}
+      - name: config
+        configMap:
+          name: {{ .Release.Name }}
+          defaultMode: {{ .Values.configMap.defaultMode | default "0755" }}
+      {{- end }}
+      {{- end }}
+  {{- $root := . }}
+  {{- with .Values.pvc }}
+  volumeClaimTemplates:
+  - metadata:
+      name: "{{ $root.Release.Name }}-pvc"
+      labels:
+        {{- include "timescale-db-helm.labels" $root | nindent 8 }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 100Mi
+  {{- end }}

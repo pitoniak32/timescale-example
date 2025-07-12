@@ -1,0 +1,101 @@
+ports:
+  - name: database
+    containerPort: 5432
+    servicePort: 5432
+    protocol: tcp
+env:
+  PGDATA: "/data/pgdata"
+secrets:
+  POSTGRES_USER: postgresadmin
+  POSTGRES_PASSWORD: admin
+  POSTGRES_DB: postgresdb
+pvc:
+  mountPath: /data
+  readOnly: false
+configMap:
+  mountPath: /config
+  readOnly: false
+  data: 
+    pg_hba.conf: |+
+      # TYPE  DATABASE        USER            ADDRESS                 METHOD
+      # host     replication     replicationuser         0.0.0.0/0        md5
+      # "local" is for Unix domain socket connections only
+      local   all             all                                     trust
+      # IPv4 local connections:
+      host    all             all             127.0.0.1/32            trust
+      # IPv6 local connections:
+      host    all             all             ::1/128                 trust
+      # Allow replication connections from localhost, by a user with the
+      # replication privilege.
+      local   replication     all                                     trust
+      host    replication     all             127.0.0.1/32            trust
+      host    replication     all             ::1/128                 trust
+
+      host all all all scram-sha-256
+    postgresql.conf: |+
+      data_directory = '/data/pgdata'
+      hba_file = '/config/pg_hba.conf'
+      ident_file = '/config/pg_ident.conf'
+
+      port = 5432
+      listen_addresses = '*'
+      max_connections = 100
+      shared_buffers = 128MB
+      dynamic_shared_memory_type = posix
+      max_wal_size = 1GB
+      min_wal_size = 80MB
+      log_timezone = 'Etc/UTC'
+      datestyle = 'iso, mdy'
+      timezone = 'Etc/UTC'
+
+      #locale settings
+      lc_messages = 'en_US.utf8'			# locale for system error message
+      lc_monetary = 'en_US.utf8'			# locale for monetary formatting
+      lc_numeric = 'en_US.utf8'			# locale for number formatting
+      lc_time = 'en_US.utf8'				# locale for time formatting
+
+      default_text_search_config = 'pg_catalog.english'
+
+    pg_ident.conf: |+
+      # PostgreSQL User Name Maps
+      # =========================
+      #
+      # Refer to the PostgreSQL documentation, chapter "Client
+      # Authentication" for a complete description.  A short synopsis
+      # follows.
+      #
+      # This file controls PostgreSQL user name mapping.  It maps external
+      # user names to their corresponding PostgreSQL user names.  Records
+      # are of the form:
+      #
+      # MAPNAME  SYSTEM-USERNAME  PG-USERNAME
+      #
+      # (The uppercase quantities must be replaced by actual values.)
+      #
+      # MAPNAME is the (otherwise freely chosen) map name that was used in
+      # pg_hba.conf.  SYSTEM-USERNAME is the detected user name of the
+      # client.  PG-USERNAME is the requested PostgreSQL user name.  The
+      # existence of a record specifies that SYSTEM-USERNAME may connect as
+      # PG-USERNAME.
+      #
+      # If SYSTEM-USERNAME starts with a slash (/), it will be treated as a
+      # regular expression.  Optionally this can contain a capture (a
+      # parenthesized subexpression).  The substring matching the capture
+      # will be substituted for \1 (backslash-one) if present in
+      # PG-USERNAME.
+      #
+      # Multiple maps may be specified in this file and used by pg_hba.conf.
+      #
+      # No map names are defined in the default configuration.  If all
+      # system user names and PostgreSQL user names are the same, you don't
+      # need anything in this file.
+      #
+      # This file is read on server startup and when the postmaster receives
+      # a SIGHUP signal.  If you edit the file on a running system, you have
+      # to SIGHUP the postmaster for the changes to take effect.  You can
+      # use "pg_ctl reload" to do that.
+
+      # Put your actual configuration here
+      # ----------------------------------
+
+      # MAPNAME       SYSTEM-USERNAME         PG-USERNAME
