@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  selector:
+    labels:
+    {{- include "timescale-db-helm.selector-labels" . | nindent 6 }}
+  serviceName: {{ .Release.Name }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+      {{- include "timescale-db-helm.labels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30
+      initContainers:
+      - name: init
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        command: [ "bash", "-c" ]
+        args:
+        - |
+          #create archive directory
+          mkdir -p /data/archive && chown -R 999:999 /data/archive
+        volumeMounts:
+        - name: data
+          mountPath: /data
+          readOnly: false
+      containers:
+      - name: postgres
+        image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+        args: ["-c", "config_file=/config/postgresql.conf"]
+        {{- with .Values.ports}}
+        ports:
+        {{- range $i, $port := . }}
+        - name: {{ $port.name }}
+          containerPort: {{ $port.containerPort }}
+          protocol: {{ $port.protocol | upper | quote }}
+        {{- end }}
+        {{- end }}
+        env:
+        {{- range $key, $value := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- $root := $ }}
+        {{- range $key, $value := .Values.secrets }}
+        - name: {{ $key }}
+          valueFrom:
+            secretKeyRef:
+              key: {{ $key }}
+              name: {{ $root.Release.Name }}
+        {{- end }}
+        {{- with .Values.volumeMounts | default (list) }}
+        volumeMounts:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.volumeMounts | default (list) }}
+      volumes:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.configMap }}
+      {{- $root := $ }}
+      {{- range $i, $cm := . }}
+      - name: {{ $cm.name }}
+        configMap:
+          name: {{ $root.Release.Name }}
+          defaultMode: {{ $cm.defaultMode | default "0755" }}
+      {{- end }}
+      {{- end }}
+  {{- with .Values.pvcs }}
+  volumeClaimTemplates:
+  {{- range $i, $pvc := . }}
+  - metadata:
+      name: {{ $pvc.name }}
+      labels:
+        {{- include "timescale-db-helm.labels" $root | nindent 8 }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 100Mi
+  {{- end }}
+  {{- end }}
